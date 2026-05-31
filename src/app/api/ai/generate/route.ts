@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { generateProductCopy } from "@/lib/ai/contentGenerators";
 
 const aiGenerateSchema = z.object({
   provider: z.enum(["openai", "anthropic", "lmstudio"]),
@@ -10,30 +11,6 @@ const aiGenerateSchema = z.object({
   keywords: z.array(z.string()).optional(),
 });
 
-function generateMockContent(productName: string, niche: string) {
-  return {
-    title: `${productName} - Premium ${niche} Solution`,
-    description: `Discover the perfect ${productName} designed for modern ${niche} enthusiasts. This premium solution combines sleek design with functional excellence.\n\nElevate your workspace with features that matter. Engineered for comfort and style, this product transforms how you work and create.\n\nJoin thousands of satisfied customers who trust this brand for quality, durability, and unmatched value. Order today and experience the difference.`,
-    tags: [
-      niche,
-      "premium",
-      "quality",
-      "home",
-      "lifestyle",
-      "productivity",
-      "ergonomic",
-      "modern",
-    ],
-    seoTitle: `${productName} | Premium ${niche} Products`,
-    seoDescription: `Shop premium ${productName} perfect for ${niche}. High-quality, affordable pricing. Free shipping on orders over $50.`,
-    imagePrompts: [
-      `Professional product photography of ${productName}, clean white background, dramatic studio lighting, lifestyle setting`,
-      `Flat lay styling of ${productName} with complementary accessories, minimalist aesthetic, top-down angle`,
-      `${productName} in use scenario, modern workspace, natural lighting, professional product photography`,
-    ],
-  };
-}
-
 export async function POST(request: Request) {
   const body = await request.json();
   const parsed = aiGenerateSchema.safeParse(body);
@@ -42,6 +19,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const mockContent = generateMockContent(parsed.data.productName, parsed.data.niche);
-  return NextResponse.json({ data: mockContent });
+  try {
+    const generatedContent = await generateProductCopy(parsed.data);
+    return NextResponse.json({ data: generatedContent }, { status: 200 });
+  } catch (error) {
+    console.error("[AI] generate route error:", error);
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "AI generation failed. Check provider configuration.",
+      },
+      { status: 500 }
+    );
+  }
 }

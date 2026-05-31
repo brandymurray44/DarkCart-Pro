@@ -9,6 +9,7 @@ import {
   getShopProductCount,
 } from "@/lib/shopifyOAuth";
 import { getSessionUser } from "@/lib/auth";
+import { registerShopifyWebhooks } from "@/services/shopify/webhookService";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -113,6 +114,16 @@ export async function GET(request: Request) {
         userId: user.id,
       },
     });
+
+    try {
+      await registerShopifyWebhooks(shop, tokenResponse.access_token);
+      console.log(`[OAuth] Registered Shopify webhooks for ${shop}`);
+    } catch (webhookError) {
+      console.error(
+        `[OAuth] Failed to register Shopify webhooks for ${shop}:`,
+        webhookError
+      );
+    }
 
     console.log(
       `[OAuth] Successfully authenticated shop: ${shop} (${productCount} products)`
