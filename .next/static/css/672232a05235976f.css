@@ -1,0 +1,1 @@
+@tailwind base;@tailwind components;@tailwind utilities;*{@apply box-border}html{scroll-behavior:smooth}body{@apply bg-slate-950 text-slate-100;font-feature-settings:"rounding" 1}a,button,input,textarea{@apply transition-all}::-webkit-scrollbar,::-webkit-scrollbar-track{@apply bg-slate-900}::-webkit-scrollbar-thumb{@apply bg-slate-700 rounded hover:bg-slate-600}
