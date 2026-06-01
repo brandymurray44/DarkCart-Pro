@@ -2,22 +2,30 @@ import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { AIContentRequest, AIContentResponse } from "@/types/ai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 async function generateOpenAI(request: AIContentRequest): Promise<AIContentResponse> {
-  const response = await openai.chat.completions.create({
+  const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY!,
+  });
+
+  const completion = await client.chat.completions.create({
     model: request.model,
-    messages: [{ role: "user", content: request.prompt }],
+    messages: [
+      {
+        role: "user",
+        content: request.prompt,
+      },
+    ],
     max_tokens: request.maxTokens ?? 512,
     temperature: request.temperature ?? 0.7,
   });
 
-  const text = response.choices[0]?.message?.content || "";
+  const text = completion.choices[0]?.message?.content ?? "";
 
   return {
     text,
-    raw: response,
+    raw: completion,
   };
 }
 
