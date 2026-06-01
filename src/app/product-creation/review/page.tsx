@@ -48,6 +48,31 @@ export default function ReviewScreen() {
     router.push("/product-creation/publish");
   };
 
+  const handleSaveDraft = () => {
+    if (!product) return;
+
+    const draft = {
+      id: `draft_${Date.now()}`,
+      savedAt: new Date().toISOString(),
+      product: {
+        ...product,
+        price: parseFloat(price),
+        bullets,
+      },
+    };
+
+    try {
+      const existing = localStorage.getItem("draftProducts");
+      const drafts = existing ? JSON.parse(existing) : [];
+      drafts.unshift(draft);
+      localStorage.setItem("draftProducts", JSON.stringify(drafts));
+      alert("Draft saved locally.");
+    } catch (e) {
+      console.error("Failed to save draft:", e);
+      alert("Failed to save draft. Check console for details.");
+    }
+  };
+
   const handleRegenerate = () => {
     sessionStorage.removeItem("generatedProduct");
     router.push("/product-creation/generate");
@@ -271,6 +296,12 @@ export default function ReviewScreen() {
             className="flex-1 px-6 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition"
           >
             Regenerate
+          </button>
+          <button
+            onClick={handleSaveDraft}
+            className="flex-1 px-6 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition"
+          >
+            Save Draft
           </button>
           <button
             onClick={handlePublish}
