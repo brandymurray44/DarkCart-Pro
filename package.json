@@ -3,11 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "postinstall": "prisma generate",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "prisma": "prisma"
+    "dev": "next dev"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.16.0",
