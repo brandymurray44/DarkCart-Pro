@@ -24,6 +24,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [shopDomain, setShopDomain] = useState("");
   const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function SettingsPage() {
 
         if (data.user) {
           // Load user's shop
-          const shopResponse = await fetch(`/api/shopify/shop?userId=${data.user.id}`);
+          const shopResponse = await fetch(`/api/shopify/shop`);
           if (shopResponse.ok) {
             const shopData = await shopResponse.json();
             setShop(shopData.data);
@@ -72,6 +73,28 @@ export default function SettingsPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Connection failed");
       setConnecting(false);
+    }
+  }
+
+  async function handleDisconnect() {
+    setDisconnecting(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/shopify/disconnect", {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const json = await response.json();
+        throw new Error(json.error || "Failed to disconnect store");
+      }
+
+      setShop(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to disconnect store");
+    } finally {
+      setDisconnecting(false);
     }
   }
 
@@ -124,10 +147,11 @@ export default function SettingsPage() {
                 </p>
               </div>
               <button
-                onClick={() => setShop(null)}
-                className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition"
+                onClick={handleDisconnect}
+                disabled={disconnecting}
+                className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 text-white rounded-lg font-medium transition"
               >
-                Disconnect Store
+                {disconnecting ? "Disconnecting..." : "Disconnect Store"}
               </button>
             </div>
           ) : (
