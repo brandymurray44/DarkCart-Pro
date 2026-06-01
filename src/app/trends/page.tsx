@@ -19,17 +19,23 @@ export default function TrendsPage() {
   const router = useRouter();
   const [trends, setTrends] = useState<Trend[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scraping, setScraping] = useState(false);
   const [selectedTrend, setSelectedTrend] = useState<Trend | null>(null);
+  const [niche, setNiche] = useState<string>("home office");
+  const [source, setSource] = useState<string>("");
 
   useEffect(() => {
     const fetchTrends = async () => {
-      const response = await fetch("/api/trends?niche=home%20office");
+      const params = new URLSearchParams();
+      if (niche) params.set("niche", niche);
+      if (source) params.set("source", source);
+      const response = await fetch(`/api/trends?${params.toString()}`);
       const json = await response.json();
       setTrends(json.data || []);
       setLoading(false);
     };
     fetchTrends();
-  }, []);
+  }, [niche, source]);
 
   const handleSelectTrend = (trend: Trend) => {
     setSelectedTrend(trend);
@@ -65,6 +71,76 @@ export default function TrendsPage() {
         <div className="mb-8 space-y-4">
           <h1 className="text-4xl font-bold text-white">Trending Products</h1>
           <p className="text-slate-400">Select a product to generate content for</p>
+        </div>
+
+        <div className="mb-6 flex items-center gap-4">
+          <input
+            value={niche}
+            onChange={(e) => setNiche(e.target.value)}
+            placeholder="Niche (e.g., home office)"
+            className="px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white"
+          />
+          <input
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+            placeholder="Source (optional, e.g., tiktok)"
+            className="px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white"
+          />
+          <button
+            onClick={() => { setLoading(true); /* triggers useEffect */ }}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded"
+          >
+            Filter
+          </button>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={async () => {
+                setScraping(true);
+                try {
+                  const res = await fetch('/api/jobs/trends', { method: 'POST' });
+                  const json = await res.json();
+                  if (res.ok) {
+                    // refetch
+                    const params = new URLSearchParams();
+                    if (niche) params.set('niche', niche);
+                    if (source) params.set('source', source);
+                    const r2 = await fetch(`/api/trends?${params.toString()}`);
+                    const j2 = await r2.json();
+                    setTrends(j2.data || []);
+                    alert(json.message || 'Scrape completed');
+                  } else if (res.status === 401) {
+                    alert('Unauthorized. Please log in to run scrapes.');
+                  } else {
+                    alert(json.message || 'Scrape failed');
+                  }
+                } catch (e) {
+                  console.error('Scrape error', e);
+                  alert('Scrape request failed');
+                } finally {
+                  setScraping(false);
+                }
+              }}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded"
+              disabled={scraping}
+            >
+              {scraping ? 'Scraping…' : 'Scrape Now'}
+            </button>
+            <button
+              onClick={async () => {
+                setLoading(true);
+                const params = new URLSearchParams();
+                if (niche) params.set('niche', niche);
+                if (source) params.set('source', source);
+                const r2 = await fetch(`/api/trends?${params.toString()}`);
+                const j2 = await r2.json();
+                setTrends(j2.data || []);
+                setLoading(false);
+              }}
+              className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
 
         {loading ? (
