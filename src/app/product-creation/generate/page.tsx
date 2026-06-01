@@ -1,159 +1,64 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-interface GenerateFormData {
-  niche: string;
-  productType: string;
-  style: string;
-  targetAudience: string;
-}
+import { GenerateForm } from "@/components/product-creation/GenerateForm";
+import { useGenerateProduct } from "@/hooks/useGenerateProduct";
 
 export default function GenerateScreen() {
   const router = useRouter();
-  const [formData, setFormData] = useState<GenerateFormData>({
-    niche: "",
-    productType: "",
-    style: "",
-    targetAudience: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { generate, loading, error } = useGenerateProduct();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  const handleSubmit = async (data: { niche: string; productType: string; style: string; targetAudience: string }) => {
+    const result = await generate({
+      provider: "openai",
+      model: "gpt-4",
+      productName: data.productType,
+      niche: data.niche,
+      targetAudience: data.targetAudience,
+      keywords: [data.style],
+    });
 
-    try {
-      const response = await fetch("/api/ai/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          provider: "openai",
-          model: "gpt-4",
-          productName: formData.productType,
-          niche: formData.niche,
-          targetAudience: formData.targetAudience,
-          keywords: [formData.style],
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to generate product");
-      }
-
-      const json = await response.json();
-      
-      // Store generated data in sessionStorage for the review screen
-      sessionStorage.setItem("generatedProduct", JSON.stringify(json.data));
-      
-      // Navigate to review screen
+    if (result) {
+      sessionStorage.setItem("generatedProduct", JSON.stringify(result));
       router.push("/product-creation/review");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
     }
-  };
-
-  const handleInputChange = (field: keyof GenerateFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-8">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Generate Product</h1>
           <p className="text-slate-400">Create an AI-powered product concept for your store</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <label className="block text-sm font-semibold text-white mb-2">
-              Niche
-            </label>
-            <input
-              type="text"
-              value={formData.niche}
-              onChange={(e) => handleInputChange("niche", e.target.value)}
-              placeholder="e.g., Home Office, Fitness, Pet Care"
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition"
-              required
-            />
-            <p className="text-xs text-slate-400 mt-2">The market category for your product</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="max-w-md">
+            <GenerateForm onSubmit={handleSubmit} loading={loading} error={error} />
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <label className="block text-sm font-semibold text-white mb-2">
-              Product Type
-            </label>
-            <input
-              type="text"
-              value={formData.productType}
-              onChange={(e) => handleInputChange("productType", e.target.value)}
-              placeholder="e.g., Ergonomic Chair, Yoga Mat, Dog Bed"
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition"
-              required
-            />
-            <p className="text-xs text-slate-400 mt-2">The specific product you want to create</p>
-          </div>
-
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <label className="block text-sm font-semibold text-white mb-2">
-              Style
-            </label>
-            <input
-              type="text"
-              value={formData.style}
-              onChange={(e) => handleInputChange("style", e.target.value)}
-              placeholder="e.g., Minimalist, Modern, Vintage, Industrial"
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition"
-              required
-            />
-            <p className="text-xs text-slate-400 mt-2">The aesthetic style of the product</p>
-          </div>
-
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <label className="block text-sm font-semibold text-white mb-2">
-              Target Audience
-            </label>
-            <textarea
-              value={formData.targetAudience}
-              onChange={(e) => handleInputChange("targetAudience", e.target.value)}
-              placeholder="e.g., Remote workers aged 25-40 who value comfort and productivity"
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition h-24 resize-none"
-              required
-            />
-            <p className="text-xs text-slate-400 mt-2">Who is this product designed for?</p>
-          </div>
-
-          {error && (
-            <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
-              <p className="text-sm text-red-300">{error}</p>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-6 py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-lg transition flex items-center justify-center gap-2"
-          >
+          <div className="flex items-center justify-center">
             {loading ? (
-              <>
-                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+              <div className="text-center">
+                <svg className="animate-spin h-16 w-16 text-indigo-500 mx-auto mb-4" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                Generating...
-              </>
+                <p className="text-slate-400">Generating your product...</p>
+              </div>
             ) : (
-              "Generate Product"
+              <div className="text-center max-w-sm">
+                <div className="mb-6">
+                  <svg className="h-24 w-24 text-slate-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">AI Magic Awaits</h3>
+                <p className="text-slate-400 text-sm">Fill in the form to see AI-generated product content appear here</p>
+              </div>
             )}
-          </button>
-        </form>
+          </div>
+        </div>
 
         <div className="mt-8 text-center">
           <button
