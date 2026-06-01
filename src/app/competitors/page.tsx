@@ -19,6 +19,9 @@ export default function CompetitorsPage() {
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [discoverNiche, setDiscoverNiche] = useState("");
+  const [discovering, setDiscovering] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,6 +40,19 @@ export default function CompetitorsPage() {
     };
     fetchData();
   }, []);
+
+  const refresh = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/competitor");
+      const json = await response.json();
+      setCompetitors(json.data || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getWeaknessColor = (score: number) => {
     if (score >= 70) return "text-green-400";
@@ -76,9 +92,73 @@ export default function CompetitorsPage() {
         {competitors.length === 0 ? (
           <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-12 text-center">
             <p className="text-slate-400 mb-4">No competitors found</p>
-            <button onClick={() => router.push("/dashboard")} className="text-indigo-400 hover:text-indigo-300">
-              Return to Dashboard
-            </button>
+            <div className="space-y-3">
+              <div>
+                <input
+                  value={discoverNiche}
+                  onChange={(e) => setDiscoverNiche(e.target.value)}
+                  placeholder="Enter a niche to discover competitors"
+                  className="px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white w-72"
+                />
+              </div>
+              <div className="flex items-center justify-center gap-4">
+                <button
+                  onClick={async () => {
+                    if (!discoverNiche) return alert('Enter a niche');
+                    setDiscovering(true);
+                    try {
+                      const res = await fetch('/api/competitor/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ niche: discoverNiche }),
+                      });
+                      const json = await res.json();
+                      if (res.ok) {
+                        alert(`Discovered ${json.discovered} stores`);
+                        setDiscoverNiche('');
+                        await refresh();
+                      } else {
+                        alert(json.error || 'Discovery failed');
+                      }
+                    } catch (e) {
+                      console.error('Discovery error', e);
+                      alert('Discovery request failed');
+                    } finally {
+                      setDiscovering(false);
+                    }
+                  }}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded"
+                  disabled={discovering}
+                >
+                  {discovering ? 'Discovering…' : 'Discover Competitors'}
+                </button>
+
+                <button
+                  onClick={async () => {
+                    setScanning(true);
+                    try {
+                      const res = await fetch('/api/jobs/competitor', { method: 'POST' });
+                      const json = await res.json();
+                      if (res.ok) {
+                        alert(json.message || 'Scan started');
+                        await refresh();
+                      } else {
+                        alert(json.error || 'Scan failed');
+                      }
+                    } catch (e) {
+                      console.error('Scan error', e);
+                      alert('Scan request failed');
+                    } finally {
+                      setScanning(false);
+                    }
+                  }}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded"
+                  disabled={scanning}
+                >
+                  {scanning ? 'Scanning…' : 'Scan Now'}
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
