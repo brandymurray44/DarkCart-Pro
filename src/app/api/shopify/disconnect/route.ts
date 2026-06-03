@@ -10,7 +10,18 @@ export async function DELETE() {
   }
 
   try {
-    await prisma.shop.deleteMany({ where: { userId: user.id } });
+    const shop = await prisma.shop.findUnique({ where: { userId: user.id } });
+
+    if (!shop) {
+      return NextResponse.json({ error: "No connected store found" }, { status: 404 });
+    }
+
+    await prisma.$transaction([
+      prisma.trendSnapshot.deleteMany({ where: { shopId: shop.id } }),
+      prisma.product.deleteMany({ where: { shopId: shop.id } }),
+      prisma.shop.delete({ where: { id: shop.id } }),
+    ]);
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[API] Shopify disconnect error:", error);

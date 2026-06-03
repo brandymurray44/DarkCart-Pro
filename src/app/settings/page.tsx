@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface User {
@@ -13,12 +12,10 @@ interface User {
 interface Shop {
   id: string;
   shopifyDomain: string;
-  accessToken: string;
   createdAt: string;
 }
 
 export default function SettingsPage() {
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [shop, setShop] = useState<Shop | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,6 +74,11 @@ export default function SettingsPage() {
   }
 
   async function handleDisconnect() {
+    const confirmed = window.confirm(
+      "Are you sure you want to disconnect your Shopify store? This will also remove all associated products and trend data."
+    );
+    if (!confirmed) return;
+
     setDisconnecting(true);
     setError("");
 
