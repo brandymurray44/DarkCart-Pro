@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/Toast";
+
+const MAX_DRAFTS = 20;
 
 interface GeneratedProduct {
   title: string;
@@ -12,33 +15,56 @@ interface GeneratedProduct {
   imagePrompts: string[];
 }
 
+interface Draft {
+  id: string;
+  savedAt: string;
+  product: GeneratedProduct & { price: number; bullets: string[] };
+}
+
 export default function ReviewScreen() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [product, setProduct] = useState<GeneratedProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [price, setPrice] = useState("");
   const [bullets, setBullets] = useState<string[]>([]);
+  const [showDrafts, setShowDrafts] = useState(false);
+  const [drafts, setDrafts] = useState<Draft[]>([]);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem("generatedProduct");
-    if (stored) {
-      const data = JSON.parse(stored);
-      setProduct(data);
-      setPrice("29.99");
-      setBullets([
-        "Premium quality materials",
-        "Sleek modern design",
-        "Perfect for your lifestyle",
-      ]);
+    try {
+      const stored = sessionStorage.getItem("generatedProduct");
+      if (stored) {
+        const data = JSON.parse(stored);
+        setProduct(data);
+        setPrice("29.99");
+        setBullets([
+          "Premium quality materials",
+          "Sleek modern design",
+          "Perfect for your lifestyle",
+        ]);
+      }
+    } catch (e) {
+      console.error("Failed to parse product data:", e);
     }
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const existing = localStorage.getItem("draftProducts");
+      if (existing) {
+        setDrafts(JSON.parse(existing));
+      }
+    } catch {
+      setDrafts([]);
+    }
   }, []);
 
   const handlePublish = () => {
     if (!product) return;
     
-    // Store product data for publish screen
     sessionStorage.setItem("productToPublish", JSON.stringify({
       ...product,
       price: parseFloat(price),
@@ -51,26 +77,56 @@ export default function ReviewScreen() {
   const handleSaveDraft = () => {
     if (!product) return;
 
-    const draft = {
+    const parsedPrice = parseFloat(price);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      showToast("warning", "Please enter a valid price before saving.");
+      return;
+    }
+
+    const draft: Draft = {
       id: `draft_${Date.now()}`,
       savedAt: new Date().toISOString(),
       product: {
         ...product,
-        price: parseFloat(price),
+        price: parsedPrice,
         bullets,
       },
     };
 
     try {
       const existing = localStorage.getItem("draftProducts");
-      const drafts = existing ? JSON.parse(existing) : [];
-      drafts.unshift(draft);
-      localStorage.setItem("draftProducts", JSON.stringify(drafts));
-      alert("Draft saved locally.");
+      const allDrafts: Draft[] = existing ? JSON.parse(existing) : [];
+      allDrafts.unshift(draft);
+      const trimmed = allDrafts.slice(0, MAX_DRAFTS);
+      localStorage.setItem("draftProducts", JSON.stringify(trimmed));
+      setDrafts(trimmed);
+      showToast("success", "Draft saved locally.");
     } catch (e) {
       console.error("Failed to save draft:", e);
-      alert("Failed to save draft. Check console for details.");
+      showToast("error", "Failed to save draft. Storage may be full.");
     }
+  };
+
+  const handleLoadDraft = (draft: Draft) => {
+    setProduct({
+      title: draft.product.title,
+      description: draft.product.description,
+      tags: draft.product.tags,
+      seoTitle: draft.product.seoTitle,
+      seoDescription: draft.product.seoDescription,
+      imagePrompts: draft.product.imagePrompts,
+    });
+    setPrice(String(draft.product.price));
+    setBullets(draft.product.bullets || []);
+    setShowDrafts(false);
+    showToast("info", `Loaded draft from ${new Date(draft.savedAt).toLocaleDateString()}.`);
+  };
+
+  const handleDeleteDraft = (draftId: string) => {
+    const updated = drafts.filter((d) => d.id !== draftId);
+    setDrafts(updated);
+    localStorage.setItem("draftProducts", JSON.stringify(updated));
+    showToast("info", "Draft deleted.");
   };
 
   const handleRegenerate = () => {
@@ -111,6 +167,16 @@ export default function ReviewScreen() {
           >
             Generate a New Product
           </button>
+          {drafts.length > 0 && (
+            <div className="mt-4">
+              <button
+                onClick={() => setShowDrafts(true)}
+                className="text-indigo-400 hover:text-indigo-300 text-sm"
+              >
+                Or load a saved draft ({drafts.length} available)
+              </button>
+            </div>
+          )}
         </div>
       </main>
     );
@@ -124,13 +190,56 @@ export default function ReviewScreen() {
             <h1 className="text-4xl font-bold text-white mb-2">Review Product</h1>
             <p className="text-slate-400">Review and edit your AI-generated product before publishing</p>
           </div>
-          <button
-            onClick={() => setEditing(!editing)}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium transition"
-          >
-            {editing ? "Done Editing" : "Edit Product"}
-          </button>
+          <div className="flex items-center gap-3">
+            {drafts.length > 0 && (
+              <button
+                onClick={() => setShowDrafts(!showDrafts)}
+                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium transition text-sm"
+              >
+                Drafts ({drafts.length})
+              </button>
+            )}
+            <button
+              onClick={() => setEditing(!editing)}
+              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium transition"
+            >
+              {editing ? "Done Editing" : "Edit Product"}
+            </button>
+          </div>
         </div>
+
+        {/* Drafts Panel */}
+        {showDrafts && (
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Saved Drafts</h3>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {drafts.map((draft) => (
+                <div key={draft.id} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
+                  <div>
+                    <p className="text-white text-sm font-medium">{draft.product.title}</p>
+                    <p className="text-slate-400 text-xs">
+                      Saved {new Date(draft.savedAt).toLocaleString()} &middot; ${draft.product.price.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleLoadDraft(draft)}
+                      className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs"
+                    >
+                      Load
+                    </button>
+                    <button
+                      onClick={() => handleDeleteDraft(draft.id)}
+                      className="px-3 py-1 bg-red-900/50 hover:bg-red-800/50 text-red-300 rounded text-xs"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Main Product Info */}
@@ -176,6 +285,7 @@ export default function ReviewScreen() {
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white focus:border-indigo-500 focus:outline-none transition"
