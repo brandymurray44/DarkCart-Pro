@@ -2,29 +2,41 @@
 
 import React, { useEffect, useState } from "react";
 
-interface PreviewProduct {
-  title?: string;
-  description?: string;
-  tags?: string[];
-  seoTitle?: string;
-  seoDescription?: string;
-  imagePrompts?: string[];
-  price?: number;
+interface ProductPreview {
+  title: string;
+  description: string;
+  price: number;
+  compareAtPrice?: number;
+  tags: string[];
+  images: Array<{ url: string; alt?: string }>;
 }
 
-export function LivePreviewCard() {
-  const [product, setProduct] = useState<PreviewProduct | null>(null);
+interface LivePreviewCardProps {
+  product?: ProductPreview;
+}
+
+function useStoredProduct(): ProductPreview | null {
+  const [product, setProduct] = useState<ProductPreview | null>(null);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem("generatedProduct") || sessionStorage.getItem("productToPublish");
+    const stored =
+      sessionStorage.getItem("generatedProduct") ||
+      sessionStorage.getItem("productToPublish");
     if (stored) {
       try {
         setProduct(JSON.parse(stored));
-      } catch (e) {
+      } catch {
         setProduct(null);
       }
     }
   }, []);
+
+  return product;
+}
+
+export function LivePreviewCard({ product: productProp }: LivePreviewCardProps) {
+  const storedProduct = useStoredProduct();
+  const product = productProp ?? storedProduct;
 
   if (!product) {
     return (
@@ -40,59 +52,12 @@ export function LivePreviewCard() {
     );
   }
 
-  return (
-    <div className="w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden">
-      <div className="h-48 bg-gradient-to-br from-slate-200 to-slate-100 flex items-center justify-center">
-        <span className="text-slate-400">Product Image</span>
-      </div>
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-slate-900">{product.title ?? "Untitled Product"}</h3>
-        <p className="text-sm text-slate-600 mt-2 line-clamp-3">{product.description ?? "No description yet."}</p>
-
-        <div className="mt-4 flex items-center justify-between">
-          <div>
-            <div className="text-slate-500 text-xs">Price</div>
-            <div className="text-lg font-bold text-slate-900">${(product.price ?? 29.99).toFixed(2)}</div>
-          </div>
-          <div className="text-right">
-            <div className="text-slate-500 text-xs">Tags</div>
-            <div className="flex gap-2 mt-1 justify-end flex-wrap">
-              {(product.tags ?? []).slice(0, 4).map((t, i) => (
-                <span key={i} className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs">
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-"use client";
-
-import React from "react";
-
-interface ProductPreview {
-  title: string;
-  description: string;
-  price: number;
-  compareAtPrice?: number;
-  tags: string[];
-  images: Array<{ url: string; alt?: string }>;
-}
-
-interface LivePreviewCardProps {
-  product: ProductPreview;
-}
-
-export function LivePreviewCard({ product }: LivePreviewCardProps) {
-  const primaryImage = product.images[0]?.url;
+  const primaryImage = product.images?.[0]?.url;
 
   return (
     <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 sticky top-8">
       <h3 className="text-lg font-semibold text-white mb-4">Live Preview</h3>
-      
+
       <div className="bg-white rounded-lg overflow-hidden mb-4">
         {primaryImage ? (
           <img
@@ -108,21 +73,21 @@ export function LivePreviewCard({ product }: LivePreviewCardProps) {
             <p className="text-slate-400 text-sm">No image</p>
           </div>
         )}
-        
+
         <div className="p-4">
           <h4 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">{product.title}</h4>
-          
+
           <div className="flex items-center gap-2 mb-3">
             <span className="text-2xl font-bold text-gray-900">${product.price.toFixed(2)}</span>
             {product.compareAtPrice && product.compareAtPrice > product.price && (
               <span className="text-sm text-gray-500 line-through">${product.compareAtPrice.toFixed(2)}</span>
             )}
           </div>
-          
+
           <p className="text-sm text-gray-600 line-clamp-3 mb-3">{product.description}</p>
-          
+
           <div className="flex flex-wrap gap-1">
-            {product.tags.slice(0, 4).map((tag, idx) => (
+            {(product.tags ?? []).slice(0, 4).map((tag, idx) => (
               <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
                 {tag}
               </span>
