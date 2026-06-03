@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       data: {
         id: shop.id,
         shopifyDomain: shop.shopifyDomain,
-        accessToken: shop.accessToken,
+        connected: !!shop.accessToken,
         createdAt: shop.createdAt,
       },
     },

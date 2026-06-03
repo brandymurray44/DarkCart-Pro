@@ -4,8 +4,15 @@ import {
   fetchTrendingItems,
   normalizeTrendCandidates,
 } from "@/server/trends/trendEngine";
+import { getSessionUser } from "@/lib/auth";
 
 export async function GET(request: Request) {
+  const user = await getSessionUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const url = new URL(request.url);
   const niche = url.searchParams.get("niche") ?? undefined;
   const source = url.searchParams.get("source") ?? undefined;

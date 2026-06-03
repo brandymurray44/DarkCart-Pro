@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { generateProductCopy } from "@/lib/ai/contentGenerators";
+import { getSessionUser } from "@/lib/auth";
 
 const aiGenerateSchema = z.object({
   provider: z.enum(["openai", "anthropic", "lmstudio"]),
@@ -12,6 +13,12 @@ const aiGenerateSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const user = await getSessionUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await request.json();
   const parsed = aiGenerateSchema.safeParse(body);
 

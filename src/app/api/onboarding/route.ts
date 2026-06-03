@@ -11,15 +11,14 @@ const onboardingSchema = z.object({
   completed: z.boolean().optional().default(true),
 });
 
-export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const userId = url.searchParams.get("userId") ?? "";
+export async function GET() {
+  const user = await getSessionUser();
 
-  if (!userId) {
-    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const onboarding = await getOnboarding(userId);
+  const onboarding = await getOnboarding(user.id);
   return NextResponse.json({ data: onboarding });
 }
 
