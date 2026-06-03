@@ -117,7 +117,7 @@ export async function updateProductPublishStatus(
     return true;
   } catch (error) {
     console.error(`[Publisher] Failed to update product ${productId}:`, error);
-    return false;
+    throw error;
   }
 }
 

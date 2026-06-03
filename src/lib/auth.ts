@@ -49,6 +49,7 @@ export async function getSessionUser() {
 
     return session.user;
   } catch (error) {
+    console.error("[Auth] Failed to retrieve session user:", error);
     return null;
   }
 }
@@ -61,7 +62,9 @@ export async function destroySession(sessionId?: string) {
   }
 
   if (sessionId) {
-    await prisma.session.delete({ where: { id: sessionId } }).catch(() => {});
+    await prisma.session.delete({ where: { id: sessionId } }).catch((error) => {
+      console.warn("[Auth] Failed to delete session from database:", error);
+    });
     cookieStore.delete(SESSION_COOKIE_NAME);
   }
 }

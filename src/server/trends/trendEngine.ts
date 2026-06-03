@@ -44,8 +44,8 @@ export async function fetchTrendingItems(
       metadata: item.metadata as Record<string, unknown>,
     }));
   } catch (error) {
-    console.error("Error fetching trending items:", error);
-    return [];
+    console.error("[TrendEngine] Error fetching trending items:", error);
+    throw error;
   }
 }
 

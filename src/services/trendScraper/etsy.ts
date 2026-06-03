@@ -45,7 +45,7 @@ async function scrapeEtsySearch(query: string): Promise<EtsyTrend[]> {
           timestamp: new Date(),
         });
       } catch (e) {
-        // Silently skip problematic entries
+        console.warn(`[Etsy] Skipping malformed listing at index ${index}:`, e);
       }
 
       return true;

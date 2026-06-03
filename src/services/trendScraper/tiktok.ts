@@ -44,7 +44,7 @@ async function fetchTikTokHashtags(): Promise<TikTokTrend[]> {
           timestamp: new Date(),
         });
       } catch (e) {
-        // Silently skip
+        console.warn(`[TikTok] Skipping malformed hashtag entry at index ${index}:`, e);
       }
 
       return true;

@@ -154,7 +154,7 @@ export async function generateOverview(
     };
   } catch (error) {
     console.error("[Analytics] Error generating overview:", error);
-    return null;
+    throw error;
   }
 }
 
@@ -225,7 +225,7 @@ export async function generateOpportunities(
       .slice(0, limit);
   } catch (error) {
     console.error("[Analytics] Error generating opportunities:", error);
-    return [];
+    throw error;
   }
 }
 
@@ -299,6 +299,6 @@ export async function generateProductAnalytics(
     });
   } catch (error) {
     console.error("[Analytics] Error generating product analytics:", error);
-    return [];
+    throw error;
   }
 }

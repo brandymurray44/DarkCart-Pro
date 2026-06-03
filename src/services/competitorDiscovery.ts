@@ -50,8 +50,8 @@ async function isShopifyStore(domain: string): Promise<boolean> {
           return true;
         }
       }
-    } catch {
-      // Continue to next indicator
+    } catch (error) {
+      console.debug(`[CompetitorDiscovery] Indicator check failed for ${baseUrl}${path}:`, error);
     }
   }
 
@@ -82,8 +82,8 @@ async function isShopifyStore(domain: string): Promise<boolean> {
     if (hasMeta) {
       return true;
     }
-  } catch {
-    // Continue
+  } catch (error) {
+    console.debug(`[CompetitorDiscovery] HTML fingerprint check failed for ${baseUrl}:`, error);
   }
 
   return false;
@@ -164,7 +164,7 @@ export async function discoverCompetitorStores(
       // Rate limiting
       await new Promise((resolve) => setTimeout(resolve, 200));
     } catch (error) {
-      // Continue
+      console.debug(`[CompetitorDiscovery] Failed to verify domain ${domain}:`, error);
     }
 
     if (discovered.length >= 20) break;
@@ -196,7 +196,8 @@ export async function discoverCompetitorStores(
 export async function validateShopifyDomain(domain: string): Promise<boolean> {
   try {
     return await isShopifyStore(domain);
-  } catch {
+  } catch (error) {
+    console.warn(`[CompetitorDiscovery] Shopify domain validation failed for ${domain}:`, error);
     return false;
   }
 }

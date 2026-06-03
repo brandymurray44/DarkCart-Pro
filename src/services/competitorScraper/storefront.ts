@@ -132,8 +132,8 @@ async function scrapeProductReviews(
         }
       }
     }
-  } catch {
-    // Silently continue
+  } catch (error) {
+    console.warn(`[Storefront] Review scraping failed for ${baseUrl}:`, error);
   }
 }
 

@@ -41,8 +41,8 @@ export async function scrapeCompetitorData(
       timestamp: new Date(),
     }));
   } catch (error) {
-    console.error(`Failed to scrape competitor ${competitorDomain}:`, error);
-    return [];
+    console.error(`[CompetitorScraper] Failed to scrape competitor ${competitorDomain}:`, error);
+    throw error;
   }
 }
 
@@ -85,8 +85,8 @@ export async function scrapeOwnStoreData(
       timestamp: new Date(),
     }));
   } catch (error) {
-    console.error(`Failed to scrape own store data for ${shopId}:`, error);
-    return [];
+    console.error(`[CompetitorScraper] Failed to scrape own store data for ${shopId}:`, error);
+    throw error;
   }
 }
 
@@ -136,6 +136,7 @@ export async function persistCompetitorIntelligence(
   competitors: NormalizedCompetitor[]
 ): Promise<number> {
   let persistedCount = 0;
+  const errors: Array<{ id: string; error: unknown }> = [];
 
   for (const competitor of competitors) {
     try {
@@ -179,11 +180,18 @@ export async function persistCompetitorIntelligence(
 
       persistedCount++;
     } catch (error) {
+      errors.push({ id: competitor.id, error });
       console.error(
-        `Failed to persist competitor ${competitor.id}:`,
+        `[CompetitorScraper] Failed to persist competitor ${competitor.id}:`,
         error
       );
     }
+  }
+
+  if (errors.length > 0) {
+    console.warn(
+      `[CompetitorScraper] ${errors.length}/${competitors.length} competitors failed to persist`
+    );
   }
 
   return persistedCount;

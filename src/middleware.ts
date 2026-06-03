@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
 
     return NextResponse.next();
   } catch (error) {
-    // If database error, redirect to home
+    console.error("[Middleware] Database error during session validation:", error);
     return NextResponse.redirect(new URL("/", request.url));
   }
 }

@@ -71,8 +71,8 @@ export async function fetchMerchantStoreData(
       },
     };
   } catch (error) {
-    console.error(`Error fetching merchant store data for ${shopId}:`, error);
-    return null;
+    console.error(`[AdminApi] Error fetching merchant store data for ${shopId}:`, error);
+    throw error;
   }
 }
 
@@ -125,10 +125,10 @@ async function fetchShopifyProducts(
     }));
   } catch (error) {
     console.error(
-      `Failed to fetch products from ${shopDomain}:`,
+      `[AdminApi] Failed to fetch products from ${shopDomain}:`,
       error
     );
-    return [];
+    throw error;
   }
 }
 
@@ -169,7 +169,7 @@ async function fetchShopifyOrders(
       createdAt: new Date(order.created_at || Date.now()),
     }));
   } catch (error) {
-    console.error(`Failed to fetch orders from ${shopDomain}:`, error);
-    return [];
+    console.error(`[AdminApi] Failed to fetch orders from ${shopDomain}:`, error);
+    throw error;
   }
 }

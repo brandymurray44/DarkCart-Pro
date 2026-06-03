@@ -183,7 +183,8 @@ export async function getShopProductCount(
 
     const data = (await response.json()) as { count?: number };
     return data.count || 0;
-  } catch {
+  } catch (error) {
+    console.warn(`[ShopifyOAuth] Failed to fetch product count for ${shop}:`, error);
     return 0;
   }
 }

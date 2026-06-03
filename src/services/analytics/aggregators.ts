@@ -85,12 +85,7 @@ export async function aggregateTrendIntelligence(
     };
   } catch (error) {
     console.error("[Analytics] Error aggregating trends:", error);
-    return {
-      topTrends: [],
-      totalTrends: 0,
-      trendVelocity: 0,
-      averageTrendScore: 0,
-    };
+    throw error;
   }
 }
 
@@ -142,13 +137,7 @@ export async function aggregateCompetitorIntelligence(
     };
   } catch (error) {
     console.error("[Analytics] Error aggregating competitors:", error);
-    return {
-      competitorCount: 0,
-      avgCompetitorScore: 0,
-      priceRange: { min: 0, max: 0 },
-      ratingRange: { min: 0, max: 0 },
-      topCompetitors: [],
-    };
+    throw error;
   }
 }
 
@@ -204,16 +193,7 @@ export async function aggregateMerchantPerformance(
     };
   } catch (error) {
     console.error("[Analytics] Error aggregating merchant performance:", error);
-    return {
-      revenue30Days: 0,
-      orders30Days: 0,
-      salesVelocity: 0,
-      avgOrderValue: 0,
-      productCount: 0,
-      publishedProducts: 0,
-      topProducts: [],
-      underperformingProducts: [],
-    };
+    throw error;
   }
 }
 
@@ -228,7 +208,7 @@ export async function getShopMetadata(shopId: string) {
     });
   } catch (error) {
     console.error("[Analytics] Error fetching shop metadata:", error);
-    return null;
+    throw error;
   }
 }
 
@@ -243,6 +223,6 @@ export async function getUserNiche(userId: string): Promise<string | null> {
     return onboarding?.niche || null;
   } catch (error) {
     console.error("[Analytics] Error fetching user niche:", error);
-    return null;
+    throw error;
   }
 }

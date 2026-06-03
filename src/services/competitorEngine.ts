@@ -82,8 +82,8 @@ export async function getCompetitorIntelligence(
       };
     });
   } catch (error) {
-    console.error("Error fetching competitor intelligence:", error);
-    return [];
+    console.error("[CompetitorEngine] Error fetching competitor intelligence:", error);
+    throw error;
   }
 }
 
@@ -144,7 +144,7 @@ export async function getUserCompetitors(
       niche: onboarding.niche,
     }));
   } catch (error) {
-    console.error("Error fetching user competitors:", error);
-    return [];
+    console.error("[CompetitorEngine] Error fetching user competitors:", error);
+    throw error;
   }
 }
