@@ -1,13 +1,10 @@
 import { NextResponse } from "next/server";
 import { runCompetitorSpyJob } from "@/jobs/competitorSpyJob";
-import { getSessionUser } from "@/lib/auth";
+import { requireAuth, apiErrorResponse } from "@/lib/api/apiUtils";
 
-export async function POST(request: Request) {
-  const user = await getSessionUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function POST() {
+  const auth = await requireAuth();
+  if (auth.response) return auth.response;
 
   try {
     const result = await runCompetitorSpyJob();
@@ -32,12 +29,6 @@ export async function POST(request: Request) {
       );
     }
   } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Job execution failed",
-      },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "Job execution failed");
   }
 }

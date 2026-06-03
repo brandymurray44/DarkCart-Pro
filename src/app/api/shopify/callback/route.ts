@@ -8,7 +8,7 @@ import {
   fetchShopMetadata,
   getShopProductCount,
 } from "@/lib/shopifyOAuth";
-import { getSessionUser } from "@/lib/auth";
+import { requireAuth } from "@/lib/api/apiUtils";
 import { registerShopifyWebhooks } from "@/services/shopify/webhookService";
 
 export async function GET(request: Request) {
@@ -76,12 +76,8 @@ export async function GET(request: Request) {
     );
   }
 
-  // Get authenticated user
-  const user = await getSessionUser();
-  if (!user) {
-    console.warn("[OAuth] User not authenticated");
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
+  const auth = await requireAuth();
+  if (auth.response) return auth.response;
 
   try {
     // Exchange authorization code for offline access token
@@ -105,13 +101,13 @@ export async function GET(request: Request) {
       update: {
         accessToken: tokenResponse.access_token,
         scopes: tokenResponse.scope,
-        userId: user.id,
+        userId: auth.user.id,
       },
       create: {
         shopifyDomain: shop,
         accessToken: tokenResponse.access_token,
         scopes: tokenResponse.scope,
-        userId: user.id,
+        userId: auth.user.id,
       },
     });
 

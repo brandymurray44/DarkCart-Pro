@@ -1,19 +1,15 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { requireAuth, apiErrorResponse } from "@/lib/api/apiUtils";
 import { getCompetitorIntelligence } from "@/services/competitorEngine";
 import prisma from "@/lib/db";
 
-export async function GET(request: Request) {
-  const user = await getSessionUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET() {
+  const auth = await requireAuth();
+  if (auth.response) return auth.response;
 
   try {
-    // Get user's niche
     const onboarding = await prisma.onboarding.findUnique({
-      where: { userId: user.id },
+      where: { userId: auth.user.id },
     });
 
     if (!onboarding) {
@@ -33,14 +29,6 @@ export async function GET(request: Request) {
       { status: 200 }
     );
   } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch competitor intelligence",
-      },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "Failed to fetch competitor intelligence");
   }
 }

@@ -1,19 +1,16 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { requireAuth, apiErrorResponse } from "@/lib/api/apiUtils";
 import prisma from "@/lib/db";
 
 export async function DELETE() {
-  const user = await getSessionUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAuth();
+  if (auth.response) return auth.response;
 
   try {
-    await prisma.shop.deleteMany({ where: { userId: user.id } });
+    await prisma.shop.deleteMany({ where: { userId: auth.user.id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[API] Shopify disconnect error:", error);
-    return NextResponse.json({ error: "Failed to disconnect Shopify store" }, { status: 500 });
+    return apiErrorResponse(error, "Failed to disconnect Shopify store");
   }
 }

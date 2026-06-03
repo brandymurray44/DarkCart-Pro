@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { publishProductForShop } from "@/services/publish/productPublisher";
-import { getSessionUser } from "@/lib/auth";
+import { requireAuth, validateBody, apiErrorResponse } from "@/lib/api/apiUtils";
 
 const publishProductSchema = z.object({
   title: z.string().min(3).max(255),
@@ -32,26 +32,16 @@ const publishProductSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const user = await getSessionUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAuth();
+  if (auth.response) return auth.response;
 
   try {
-    const body = await request.json();
-    const parsed = publishProductSchema.safeParse(body);
+    const validation = await validateBody(request, publishProductSchema);
+    if (validation.response) return validation.response;
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
+    console.log(`[API] Publish product request from user ${auth.user.id}`);
 
-    console.log(`[API] Publish product request from user ${user.id}`);
-
-    const result = await publishProductForShop(user.id, parsed.data);
+    const result = await publishProductForShop(auth.user.id, validation.data);
 
     if (result.success) {
       return NextResponse.json(result, { status: 201 });
@@ -60,13 +50,6 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     console.error("[API] Publish error:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error:
-          error instanceof Error ? error.message : "Failed to publish product",
-      },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "Failed to publish product");
   }
 }

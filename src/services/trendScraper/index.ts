@@ -1,6 +1,6 @@
-import { scrapeTikTok, type TikTokTrend } from "./tiktok";
-import { scrapeEtsy, type EtsyTrend } from "./etsy";
-import { scrapeReddit, type RedditTrend } from "./reddit";
+import { scrapeTikTok } from "./tiktok";
+import { scrapeEtsy } from "./etsy";
+import { scrapeReddit } from "./reddit";
 import prisma from "@/lib/db";
 import { createHash } from "crypto";
 
@@ -17,62 +17,41 @@ export interface NormalizedTrend {
   timestamp: Date;
 }
 
+interface RawTrend {
+  id: string;
+  title: string;
+  description: string;
+  score: number;
+  url: string;
+  image?: string;
+  timestamp: Date;
+}
+
 function generateId(title: string, source: string): string {
   return createHash("md5")
     .update(`${source}:${title}`)
     .digest("hex");
 }
 
-function normalizeTikTokTrend(trend: TikTokTrend): NormalizedTrend {
+function normalizeTrend(
+  trend: RawTrend,
+  source: NormalizedTrend["source"],
+  niche: string,
+  extraMetadata: Record<string, unknown> = {}
+): NormalizedTrend {
   return {
-    id: generateId(trend.title, "tiktok"),
+    id: generateId(trend.title, source),
     title: trend.title,
     description: trend.description,
     score: Math.min(100, Math.max(0, trend.score)),
-    source: "tiktok",
+    source,
     url: trend.url,
     image: trend.image,
-    niche: "general",
+    niche,
     metadata: {
       original_id: trend.id,
       scraped_at: new Date().toISOString(),
-    },
-    timestamp: trend.timestamp,
-  };
-}
-
-function normalizeEtsyTrend(trend: EtsyTrend): NormalizedTrend {
-  return {
-    id: generateId(trend.title, "etsy"),
-    title: trend.title,
-    description: trend.description,
-    score: Math.min(100, Math.max(0, trend.score)),
-    source: "etsy",
-    url: trend.url,
-    image: trend.image,
-    niche: "ecommerce",
-    metadata: {
-      original_id: trend.id,
-      scraped_at: new Date().toISOString(),
-    },
-    timestamp: trend.timestamp,
-  };
-}
-
-function normalizeRedditTrend(trend: RedditTrend): NormalizedTrend {
-  return {
-    id: generateId(trend.title, "reddit"),
-    title: trend.title,
-    description: trend.description,
-    score: Math.min(100, Math.max(0, trend.score)),
-    source: "reddit",
-    url: trend.url,
-    image: trend.image,
-    niche: "business",
-    metadata: {
-      original_id: trend.id,
-      subreddit: trend.url.includes("reddit.com") ? "general" : "specific",
-      scraped_at: new Date().toISOString(),
+      ...extraMetadata,
     },
     timestamp: trend.timestamp,
   };
@@ -91,39 +70,55 @@ function deduplicateTrends(trends: NormalizedTrend[]): NormalizedTrend[] {
   return Array.from(seen.values());
 }
 
+interface ScraperConfig {
+  name: string;
+  source: NormalizedTrend["source"];
+  niche: string;
+  scrape: () => Promise<RawTrend[]>;
+  extraMetadata?: (trend: RawTrend) => Record<string, unknown>;
+}
+
+const scraperConfigs: ScraperConfig[] = [
+  {
+    name: "TikTok",
+    source: "tiktok",
+    niche: "general",
+    scrape: scrapeTikTok as () => Promise<RawTrend[]>,
+  },
+  {
+    name: "Etsy",
+    source: "etsy",
+    niche: "ecommerce",
+    scrape: scrapeEtsy as () => Promise<RawTrend[]>,
+  },
+  {
+    name: "Reddit",
+    source: "reddit",
+    niche: "business",
+    scrape: scrapeReddit as () => Promise<RawTrend[]>,
+    extraMetadata: (trend) => ({
+      subreddit: trend.url.includes("reddit.com") ? "general" : "specific",
+    }),
+  },
+];
+
 export async function scrapeAllTrends(): Promise<NormalizedTrend[]> {
   const results: NormalizedTrend[] = [];
 
-  try {
-    console.log("[TrendScraper] Starting TikTok scrape...");
-    const tiktokTrends = await scrapeTikTok();
-    results.push(
-      ...tiktokTrends.map((t) => normalizeTikTokTrend(t))
-    );
-    console.log(`[TrendScraper] Scraped ${tiktokTrends.length} TikTok trends`);
-  } catch (error) {
-    console.error("[TrendScraper] TikTok scraping failed:", error);
+  for (const config of scraperConfigs) {
+    try {
+      console.log(`[TrendScraper] Starting ${config.name} scrape...`);
+      const trends = await config.scrape();
+      const normalized = trends.map((t) =>
+        normalizeTrend(t, config.source, config.niche, config.extraMetadata?.(t))
+      );
+      results.push(...normalized);
+      console.log(`[TrendScraper] Scraped ${trends.length} ${config.name} trends`);
+    } catch (error) {
+      console.error(`[TrendScraper] ${config.name} scraping failed:`, error);
+    }
   }
 
-  try {
-    console.log("[TrendScraper] Starting Etsy scrape...");
-    const etsyTrends = await scrapeEtsy();
-    results.push(...etsyTrends.map((t) => normalizeEtsyTrend(t)));
-    console.log(`[TrendScraper] Scraped ${etsyTrends.length} Etsy trends`);
-  } catch (error) {
-    console.error("[TrendScraper] Etsy scraping failed:", error);
-  }
-
-  try {
-    console.log("[TrendScraper] Starting Reddit scrape...");
-    const redditTrends = await scrapeReddit();
-    results.push(...redditTrends.map((t) => normalizeRedditTrend(t)));
-    console.log(`[TrendScraper] Scraped ${redditTrends.length} Reddit trends`);
-  } catch (error) {
-    console.error("[TrendScraper] Reddit scraping failed:", error);
-  }
-
-  // Deduplicate and sort by score
   const deduplicated = deduplicateTrends(results);
   return deduplicated.sort((a, b) => b.score - a.score);
 }
@@ -147,7 +142,7 @@ export async function persistTrendsGlobally(
         score: trend.score,
         niche: trend.niche,
         metadata: trend.metadata as any,
-        shopId: "global", // Store globally, not per-shop
+        shopId: "global",
       },
     })
   );

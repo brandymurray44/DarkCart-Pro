@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getOnboarding, upsertOnboarding } from "@/server/onboarding/onboardingService";
-import { getSessionUser } from "@/lib/auth";
+import { requireAuth, validateBody } from "@/lib/api/apiUtils";
 
 const onboardingSchema = z.object({
   userId: z.string().uuid(),
@@ -24,30 +24,22 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const user = await getSessionUser();
+  const auth = await requireAuth();
+  if (auth.response) return auth.response;
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const validation = await validateBody(request, onboardingSchema);
+  if (validation.response) return validation.response;
 
-  const body = await request.json();
-  const parsed = onboardingSchema.safeParse(body);
-
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  // Ensure user can only update their own onboarding
-  if (parsed.data.userId !== user.id) {
+  if (validation.data.userId !== auth.user.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const onboarding = await upsertOnboarding(
-    parsed.data.userId,
-    parsed.data.niche,
-    parsed.data.storeType,
-    parsed.data.goals,
-    parsed.data.completed
+    validation.data.userId,
+    validation.data.niche,
+    validation.data.storeType,
+    validation.data.goals,
+    validation.data.completed
   );
 
   return NextResponse.json({ data: onboarding });

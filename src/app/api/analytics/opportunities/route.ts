@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
-import prisma from "@/lib/db";
+import { requireAuth, requireShop, apiErrorResponse } from "@/lib/api/apiUtils";
 import { generateOpportunities } from "@/services/analytics/analyticsEngine";
 
 export async function GET(request: Request) {
-  const user = await getSessionUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAuth();
+  if (auth.response) return auth.response;
 
   try {
     const url = new URL(request.url);
@@ -17,22 +13,12 @@ export async function GET(request: Request) {
       50
     );
 
-    // Get user's shop
-    const shop = await prisma.shop.findFirst({
-      where: { userId: user.id },
-    });
+    const shopResult = await requireShop(auth.user.id);
+    if (shopResult.response) return shopResult.response;
 
-    if (!shop) {
-      return NextResponse.json(
-        { error: "No shop connected" },
-        { status: 404 }
-      );
-    }
-
-    // Generate opportunities
     const opportunities = await generateOpportunities(
-      user.id,
-      shop.id,
+      auth.user.id,
+      shopResult.shop.id,
       limit
     );
 
@@ -42,14 +28,6 @@ export async function GET(request: Request) {
     );
   } catch (error) {
     console.error("[API] Opportunities error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch opportunities",
-      },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "Failed to fetch opportunities");
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { generateProductCopy } from "@/lib/ai/contentGenerators";
+import { validateBody, apiErrorResponse } from "@/lib/api/apiUtils";
 
 const aiGenerateSchema = z.object({
   provider: z.enum(["openai", "anthropic", "lmstudio"]),
@@ -12,26 +13,17 @@ const aiGenerateSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const parsed = aiGenerateSchema.safeParse(body);
-
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  const validation = await validateBody(request, aiGenerateSchema);
+  if (validation.response) return validation.response;
 
   try {
-    const generatedContent = await generateProductCopy(parsed.data);
+    const generatedContent = await generateProductCopy(validation.data);
     return NextResponse.json({ data: generatedContent }, { status: 200 });
   } catch (error) {
     console.error("[AI] generate route error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "AI generation failed. Check provider configuration.",
-      },
-      { status: 500 }
+    return apiErrorResponse(
+      error,
+      "AI generation failed. Check provider configuration."
     );
   }
 }
