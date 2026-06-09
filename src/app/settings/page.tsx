@@ -217,6 +217,41 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Legal Section */}
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8">
+          <h2 className="text-2xl font-bold text-white mb-6">Legal</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <a
+              href="/legal/terms"
+              className="p-4 bg-slate-700/50 border border-slate-700 hover:border-indigo-500/50 rounded-lg transition group"
+            >
+              <p className="text-white font-semibold mb-1">Terms of Service</p>
+              <p className="text-slate-400 text-xs">Account terms, acceptable use, subscriptions, and liability.</p>
+            </a>
+            <a
+              href="/legal/privacy"
+              className="p-4 bg-slate-700/50 border border-slate-700 hover:border-indigo-500/50 rounded-lg transition group"
+            >
+              <p className="text-white font-semibold mb-1">Privacy Policy</p>
+              <p className="text-slate-400 text-xs">How we collect, use, and protect your personal data.</p>
+            </a>
+            <a
+              href="/legal/refund"
+              className="p-4 bg-slate-700/50 border border-slate-700 hover:border-indigo-500/50 rounded-lg transition group"
+            >
+              <p className="text-white font-semibold mb-1">Refund Policy</p>
+              <p className="text-slate-400 text-xs">Subscription terms, cancellation, and refund eligibility.</p>
+            </a>
+            <a
+              href="/legal/dpa"
+              className="p-4 bg-slate-700/50 border border-slate-700 hover:border-indigo-500/50 rounded-lg transition group"
+            >
+              <p className="text-white font-semibold mb-1">Data Processing Addendum</p>
+              <p className="text-slate-400 text-xs">GDPR-compliant data processing terms.</p>
+            </a>
+          </div>
+        </div>
+
         {/* Shopify Integration Section */}
         <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8">
           <h2 className="text-2xl font-bold text-white mb-6">Shopify Integration</h2>

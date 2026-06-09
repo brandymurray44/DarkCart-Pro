@@ -1,6 +1,7 @@
 import { AIContentRequest, AIContentResponse } from "@/types/ai";
 import { generateAIContent } from "@/lib/ai/engine";
 import { buildProductPrompt } from "@/lib/ai/prompts/product";
+import { buildTrendInsightPrompt } from "@/lib/ai/prompts/trend";
 
 export interface ProductCopyRequest {
   provider: AIContentRequest["provider"];
@@ -40,8 +41,10 @@ export async function generateProductCopy(request: ProductCopyRequest): Promise<
     temperature: 0.7,
   };
 
+
   const result = await generateAIContent(aiRequest);
   const payload = parseJSONOutput(result.text || String(result.raw));
+
 
   return {
     title: String((payload as any).title ?? ""),
@@ -51,5 +54,49 @@ export async function generateProductCopy(request: ProductCopyRequest): Promise<
     seoDescription: String((payload as any).seoDescription ?? ""),
     imagePrompts: Array.isArray((payload as any).imagePrompts) ? (payload as any).imagePrompts.map(String) : [],
     raw: result.raw,
+  };
+}
+
+// Trend insights — lightweight per-trend AI call
+
+export interface TrendInsightsRequest {
+  provider: AIContentRequest["provider"];
+  model: string;
+  title: string;
+  source: string;
+  score: number;
+  velocity?: number;
+  saturation?: number;
+  niche: string;
+}
+
+export interface TrendInsights {
+  insight: string;
+  action: "Buy" | "Wait" | "Monitor" | "Differentiate";
+  opportunity: string;
+}
+
+export async function generateTrendInsights(
+  request: TrendInsightsRequest
+): Promise<TrendInsights> {
+  const aiRequest: AIContentRequest = {
+    provider: request.provider,
+    model: request.model,
+    prompt: buildTrendInsightPrompt(request),
+    maxTokens: 200,
+    temperature: 0.4,
+  };
+
+
+  const result = await generateAIContent(aiRequest);
+  const payload = parseJSONOutput(result.text || String(result.raw));
+
+
+  return {
+    insight: String((payload as any).insight ?? ""),
+    action: (["Buy", "Wait", "Monitor", "Differentiate"].includes((payload as any).action)
+      ? (payload as any).action
+      : "Monitor") as TrendInsights["action"],
+    opportunity: String((payload as any).opportunity ?? ""),
   };
 }

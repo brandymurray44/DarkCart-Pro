@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 interface Trend {
   id: string;
@@ -11,6 +11,23 @@ interface Trend {
   niche: string;
   freshness?: string;
   momentum?: number;
+  velocity?: number;
+  saturation?: number;
+}
+
+interface TrendInsights {
+  insight: string;
+  action: "Buy" | "Wait" | "Monitor" | "Differentiate";
+  opportunity: string;
+}
+
+function getActionColor(action: TrendInsights["action"]) {
+  switch (action) {
+    case "Buy": return "text-emerald-400 bg-emerald-900/40 border border-emerald-500/50";
+    case "Wait": return "text-amber-400 bg-amber-900/40 border border-amber-500/50";
+    case "Differentiate": return "text-purple-400 bg-purple-900/40 border border-purple-500/50";
+    default: return "text-blue-400 bg-blue-900/40 border border-blue-500/50";
+  }
 }
 
 interface TrendDetailModalProps {
@@ -21,6 +38,29 @@ interface TrendDetailModalProps {
 
 export function TrendDetailModal({ trend, onClose, onSelect }: TrendDetailModalProps) {
   if (!trend) return null;
+
+
+  const [insights, setInsights] = useState<TrendInsights | null>(null);
+  const [loadingInsights, setLoadingInsights] = useState(false);
+
+  useEffect(() => {
+    if (!trend) return;
+    setLoadingInsights(true);
+    setInsights(null);
+    const params = new URLSearchParams({
+      title: trend.title,
+      source: trend.source,
+      score: String(trend.score),
+      niche: trend.niche,
+    });
+    if (trend.velocity !== undefined) params.set("velocity", String(trend.velocity));
+    if (trend.saturation !== undefined) params.set("saturation", String(trend.saturation));
+    fetch(`/api/trends/insights?${params.toString()}`)
+      .then((r) => r.json())
+      .then((json) => { if (json.data) setInsights(json.data); })
+      .catch(() => null)
+      .finally(() => setLoadingInsights(false));
+  }, [trend]);
 
   const getFreshnessColor = (freshness?: string) => {
     switch (freshness) {
@@ -76,6 +116,38 @@ export function TrendDetailModal({ trend, onClose, onSelect }: TrendDetailModalP
               <div className="bg-slate-900/50 border border-slate-600 rounded-lg p-4">
                 <p className="text-xs text-slate-400 mb-1">Momentum</p>
                 <p className="text-3xl font-bold text-white">{(trend.momentum * 100).toFixed(0)}%</p>
+              </div>
+            )}
+          </div>
+
+          {/* AI Insights Section */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
+                <span className="text-white text-[10px] font-bold">AI</span>
+              </div>
+              <h3 className="text-sm font-semibold text-white">AI Trend Analysis</h3>
+              {loadingInsights && (
+                <svg className="animate-spin h-3 w-3 text-indigo-400" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+              )}
+            </div>
+            {insights ? (
+              <div className="bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">Recommendation</span>
+                  <span className={`text-xs px-2 py-0.5 rounded font-semibold ${getActionColor(insights.action)}`}>{insights.action}</span>
+                </div>
+                <p className="text-sm text-slate-200 leading-relaxed">{insights.insight}</p>
+                {insights.opportunity && (
+                  <p className="text-xs text-indigo-300 italic">💡 {insights.opportunity}</p>
+                )}
+              </div>
+            ) : !loadingInsights && (
+              <div className="bg-slate-900/40 border border-slate-700/50 rounded-lg p-4">
+                <p className="text-xs text-slate-500 italic">AI analysis unavailable</p>
               </div>
             )}
           </div>
