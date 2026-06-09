@@ -204,7 +204,7 @@ export default function TermsPage() {
           <section className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
             <h2 className="text-xl font-bold text-white mb-3">15. Governing Law & Dispute Resolution</h2>
             <p>
-              These Terms shall be governed by and construed in accordance with the laws of the State of Delaware, USA,
+              These Terms shall be governed by and construed in accordance with the laws of the State of Oregon, USA,
               without regard to its conflict of law provisions. Any dispute arising out of or relating to these Terms
               or your use of the Service shall first be attempted to be resolved through good-faith negotiation. If the
               dispute cannot be resolved within 30 days of negotiation, either party may pursue binding arbitration
@@ -223,15 +223,95 @@ export default function TermsPage() {
             </p>
           </section>
 
-          {/* 17. Contact */}
+          {/* 17. Oregon Compliance & State-Specific Provisions */}
+          <section className="bg-slate-800/50 border border-indigo-500/30 rounded-lg p-6">
+            <h2 className="text-xl font-bold text-white mb-3">17. Oregon Compliance & State-Specific Provisions</h2>
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-indigo-400 mb-1">17.1 Oregon Right to Cure (ORS 646.380)</h3>
+                <p className="text-xs text-slate-400 mb-2">
+                  Before filing any legal action against the Company arising from these Terms, you must provide written
+                  notice to the Company describing the alleged violation. The Company shall have 45 days from receipt
+                  of such notice to cure the alleged violation. If the violation is not cured within 45 days, you may
+                  pursue legal remedies as provided under Oregon law.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-indigo-400 mb-1">17.2 Oregon Consumer Protection (ORS Chapter 646)</h3>
+                <p className="text-xs text-slate-400 mb-2">
+                  DarkCart-Pro is committed to compliance with the Oregon Unlawful Trade Practices Act (ORS 646.605–
+                  646.656). Nothing in these Terms limits any rights you may have under Oregon consumer protection
+                  laws, including the right to bring a private action under ORS 646.638.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-indigo-400 mb-1">17.3 Oregon Computer Crime (ORS 164.372)</h3>
+                <p className="text-xs text-slate-400 mb-2">
+                  Use of the Service to access, copy, extract, or scrape data in violation of these Terms may
+                  constitute unlawful computer access under ORS 164.372. The Company reserves the right to report
+                  suspected violations to Oregon law enforcement authorities.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-indigo-400 mb-1">17.4 Oregon Sales & Use Tax Nexus</h3>
+                <p className="text-xs text-slate-400 mb-2">
+                  If you are a merchant operating a Shopify store with Oregon nexus, you are solely responsible for
+                  determining and remitting applicable Oregon state and local sales and use taxes. DarkCart-Pro does
+                  not provide tax compliance advice. Consult a qualified Oregon tax professional.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-indigo-400 mb-1">17.5 Oregon Consumer Data Protection (ORS Chapter 285A / SB 619)</h3>
+                <p className="text-xs text-slate-400 mb-2">
+                  To the extent applicable, DarkCart-Pro will honor all rights afforded to Oregon consumers under
+                  state data protection laws, including rights to access, correct, delete, and opt out of the sale
+                  of personal data. See our Privacy Policy for details on how we collect and process personal data.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-indigo-400 mb-1">17.6 Oregon Electronic Transactions Act (ORS Chapter 84)</h3>
+                <p className="text-xs text-slate-400 mb-2">
+                  Electronic signatures and records generated in connection with these Terms shall be valid and
+                  enforceable under the Oregon Electronic Transactions Act, ORS Chapter 84, to the maximum extent
+                  permitted by applicable law.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-indigo-400 mb-1">17.7 Oregon Lemon Law (ORS 646.205)</h3>
+                <p className="text-xs text-slate-400 mb-2">
+                  If you sell physical goods in Oregon, you are responsible for compliance with the Oregon Lemon Law
+                  and any applicable product warranty statutes. DarkCart-Pro is not a seller of goods and assumes
+                  no liability for products you publish or sell through your Shopify store.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-indigo-400 mb-1">17.8 Oregon Attorney General Authority</h3>
+                <p className="text-xs text-slate-400">
+                  Nothing in these Terms limits the authority of the Oregon Attorney General to enforce consumer
+                  protection laws on behalf of Oregon residents under ORS Chapter 646.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* 18. Contact */}
           <section className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <h2 className="text-xl font-bold text-white mb-3">17. Contact Information</h2>
+            <h2 className="text-xl font-bold text-white mb-3">18. Contact Information</h2>
             <p>
               For questions about these Terms, contact us at:
             </p>
             <ul className="mt-2 space-y-1 list-disc list-inside">
               <li>Email: <a href="mailto:legal@darkcart.pro" className="text-indigo-400 hover:text-indigo-300">legal@darkcart.pro</a></li>
-              <li>Address: DarkCart-Pro Legal, 123 Commerce Ave, Suite 100, Dover, DE 19901, USA</li>
+              <li>Address: DarkCart-Pro Legal, 4524 SW Canyon Rd, Suite 201, Portland, OR 97221, USA</li>
+              <li>Oregon Consumer Assistance: <a href="https://www.oregon.gov/consumer" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300">www.oregon.gov/consumer</a></li>
             </ul>
           </section>
 
