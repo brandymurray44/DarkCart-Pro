@@ -14,6 +14,12 @@ export async function GET() {
         id: user.id,
         email: user.email,
         name: user.name,
+        tier: user.tier,
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionPlan: user.subscriptionPlan,
+        subscriptionEndsAt: user.subscriptionEndsAt,
+        hasStore: !!user.shop,
+        storeDomain: user.shop?.shopifyDomain,
       },
     },
     { status: 200 }

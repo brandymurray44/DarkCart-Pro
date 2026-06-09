@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { usePremiumAccess, PremiumLock, PremiumBadge } from "@/components/ui/PremiumLock";
 
 interface CompetitorProduct {
   id: string;
@@ -52,6 +53,7 @@ export default function CompetitorDetailPage() {
   const [competitor, setCompetitor] = useState<CompetitorDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { canAccess: hasBlackAccess } = usePremiumAccess("BLACK");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -153,51 +155,59 @@ export default function CompetitorDetailPage() {
             <p className="text-2xl font-bold text-white">{competitor.totalSales.toLocaleString()}</p>
           </div>
           <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <p className="text-sm text-slate-400 mb-2">Weakness Score</p>
-            <p className={`text-2xl font-bold ${getWeaknessColor(competitor.weaknessScore)}`}>
-              {competitor.weaknessScore}/100
+            <p className="text-sm text-slate-400 mb-2">
+              {hasBlackAccess ? "Weakness Score" : <PremiumBadge />}
             </p>
+            {hasBlackAccess ? (
+              <p className={`text-2xl font-bold ${getWeaknessColor(competitor.weaknessScore)}`}>
+                {competitor.weaknessScore}/100
+              </p>
+            ) : (
+              <p className="text-2xl font-bold text-slate-500">??/100</p>
+            )}
           </div>
         </div>
 
-        {/* Weakness Breakdown */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-8">
-          <h2 className="text-2xl font-bold text-white mb-4">Opportunity Analysis</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div>
-              <div className="flex justify-between mb-2">
-                <span className="text-slate-400 text-sm">Pricing Gap</span>
-                <span className="text-white font-semibold">{competitor.weaknessBreakdown.pricing}%</span>
+        {/* Weakness Breakdown — Premium */}
+        {hasBlackAccess ? (
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-8">
+            <h2 className="text-2xl font-bold text-white mb-4">Opportunity Analysis</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="bg-slate-800/40 rounded-lg p-3">
+                <div className="flex justify-between mb-2">
+                  <span className="text-slate-400 text-sm">Pricing Gap</span>
+                  <span className="text-white font-semibold">{competitor.weaknessBreakdown.pricing}%</span>
+                </div>
+                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div className={`h-full ${getBarColor(competitor.weaknessBreakdown.pricing)}`} style={{ width: `${competitor.weaknessBreakdown.pricing}%` }} />
+                </div>
               </div>
-              <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                <div className={`h-full ${getBarColor(competitor.weaknessBreakdown.pricing)}`} style={{ width: `${competitor.weaknessBreakdown.pricing}%` }} />
+              <div className="bg-slate-800/40 rounded-lg p-3">
+                <div className="flex justify-between mb-2">
+                  <span className="text-slate-400 text-sm">Rating Gap</span>
+                  <span className="text-white font-semibold">{competitor.weaknessBreakdown.ratings}%</span>
+                </div>
+                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div className={`h-full ${getBarColor(competitor.weaknessBreakdown.ratings)}`} style={{ width: `${competitor.weaknessBreakdown.ratings}%` }} />
+                </div>
               </div>
-            </div>
-            <div>
-              <div className="flex justify-between mb-2">
-                <span className="text-slate-400 text-sm">Rating Gap</span>
-                <span className="text-white font-semibold">{competitor.weaknessBreakdown.ratings}%</span>
+              <div className="bg-slate-800/40 rounded-lg p-3">
+                <div className="flex justify-between mb-2">
+                  <span className="text-slate-400 text-sm">Review Gap</span>
+                  <span className="text-white font-semibold">{competitor.weaknessBreakdown.reviews}%</span>
+                </div>
+                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div className={`h-full ${getBarColor(competitor.weaknessBreakdown.reviews)}`} style={{ width: `${competitor.weaknessBreakdown.reviews}%` }} />
+                </div>
               </div>
-              <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                <div className={`h-full ${getBarColor(competitor.weaknessBreakdown.ratings)}`} style={{ width: `${competitor.weaknessBreakdown.ratings}%` }} />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between mb-2">
-                <span className="text-slate-400 text-sm">Review Gap</span>
-                <span className="text-white font-semibold">{competitor.weaknessBreakdown.reviews}%</span>
-              </div>
-              <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                <div className={`h-full ${getBarColor(competitor.weaknessBreakdown.reviews)}`} style={{ width: `${competitor.weaknessBreakdown.reviews}%` }} />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between mb-2">
-                <span className="text-slate-400 text-sm">Variety Gap</span>
-                <span className="text-white font-semibold">{Math.round(competitor.weaknessBreakdown.productVariety)}%</span>
-              </div>
-              <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                <div className={`h-full ${getBarColor(competitor.weaknessBreakdown.productVariety)}`} style={{ width: `${competitor.weaknessBreakdown.productVariety}%` }} />
+              <div className="bg-slate-800/40 rounded-lg p-3">
+                <div className="flex justify-between mb-2">
+                  <span className="text-slate-400 text-sm">Variety Gap</span>
+                  <span className="text-white font-semibold">{Math.round(competitor.weaknessBreakdown.productVariety)}%</span>
+                </div>
+                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div className={`h-full ${getBarColor(competitor.weaknessBreakdown.productVariety)}`} style={{ width: `${competitor.weaknessBreakdown.productVariety}%` }} />
+                </div>
               </div>
             </div>
           </div>
@@ -233,6 +243,11 @@ export default function CompetitorDetailPage() {
             </div>
           </div>
         </div>
+        ) : (
+          <div className="mb-8">
+            <PremiumLock message="Unlock Opportunity Analysis, AI Insights, and detailed charts with Black-Access" />
+          </div>
+        )}
 
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-white mb-4">Top Products</h2>
@@ -274,6 +289,8 @@ export default function CompetitorDetailPage() {
           </div>
         </div>
 
+        {hasBlackAccess ? (
+          <>
         {/* Price Chart Visualization */}
         <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-8">
           <h2 className="text-2xl font-bold text-white mb-4">Price Distribution</h2>
@@ -318,6 +335,8 @@ export default function CompetitorDetailPage() {
             )}
           </div>
         </div>
+          </>
+        ) : null}
       </div>
     </main>
   );

@@ -8,14 +8,28 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  email         String   @unique
-  name          String?
-  shop          Shop?
-  onboarding    Onboarding?
-  sessions      Session[]
+  id                   String    @id @default(uuid())
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  email                String    @unique
+  name                 String?
+  tier                 UserTier  @default(FREE)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  subscriptionStatus   String?
+  subscriptionPlan    String?
+  subscriptionEndsAt   DateTime?
+  shop                 Shop?
+  onboarding           Onboarding?
+  sessions             Session[]
+  billingRecords       BillingRecord[]
+}
+
+enum UserTier {
+  FREE
+  STARTER
+  PRO
+  BLACK
 }
 
 model Session {
@@ -91,4 +105,18 @@ model CompetitorSpy {
   reviewCount  Int?
   summary      String?
   rawData      Json?
+}
+
+model BillingRecord {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  amount      Int
+  currency    String   @default("usd")
+  status      String
+  stripeId    String?
+  plan        String
+  periodStart DateTime?
+  periodEnd   DateTime?
 }

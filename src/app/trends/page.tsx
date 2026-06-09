@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { TrendDetailModal } from "@/components/trends/TrendDetailModal";
 import { useToast } from "@/components/ui/Toast";
+import { usePremiumAccess, PremiumBadge } from "@/components/ui/PremiumLock";
 
 interface Trend {
   id: string;
@@ -22,6 +23,7 @@ interface Trend {
 export default function TrendsPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { canAccess: hasBlackAccess } = usePremiumAccess("BLACK");
   const [trends, setTrends] = useState<Trend[]>([]);
   const [loading, setLoading] = useState(true);
   const [scraping, setScraping] = useState(false);
@@ -295,10 +297,14 @@ export default function TrendsPage() {
                     View Details
                   </button>
                   <button
-                    onClick={() => handleGenerateProduct(trend)}
-                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded font-medium transition"
+                    onClick={() => hasBlackAccess ? handleGenerateProduct(trend) : router.push("/settings")}
+                    className={`px-3 py-1.5 text-xs rounded font-medium transition flex items-center gap-1 ${
+                      hasBlackAccess
+                        ? "bg-indigo-600 hover:bg-indigo-500 text-white"
+                        : "bg-indigo-600/50 hover:bg-indigo-600 text-white border border-indigo-500/50"
+                    }`}
                   >
-                    Generate Product
+                    {hasBlackAccess ? "Generate Product" : <><PremiumBadge /> Premium Access</>}
                   </button>
                 </div>
               </div>

@@ -3,12 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { GenerateForm } from "@/components/product-creation/GenerateForm";
+import { usePremiumAccess, PremiumLock } from "@/components/ui/PremiumLock";
 import { LivePreviewCard } from "@/components/product-creation/LivePreviewCard";
 import { useGenerateProduct } from "@/hooks/useGenerateProduct";
 
 export default function GenerateScreen() {
   const router = useRouter();
   const { generate, loading, error } = useGenerateProduct();
+  const { canAccess: hasBlackAccess } = usePremiumAccess("BLACK");
   const [prefill, setPrefill] = useState<{
     niche?: string;
     productType?: string;
@@ -43,6 +45,18 @@ export default function GenerateScreen() {
       router.push("/product-creation/review");
     }
   };
+
+  if (!hasBlackAccess) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-8">
+        <div className="max-w-lg mx-auto mt-16">
+          <h1 className="text-3xl font-bold text-white mb-4">Generate Product</h1>
+          <p className="text-slate-400 mb-6">AI-powered product generation is a premium feature.</p>
+          <PremiumLock message="Unlock AI product generation, descriptions, images, and more with Black-Access" />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-8">

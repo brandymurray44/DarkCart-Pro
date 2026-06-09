@@ -7,6 +7,9 @@ interface User {
   id: string;
   email: string;
   name: string | null;
+  tier: string;
+  subscriptionStatus: string | null;
+  subscriptionPlan: string | null;
 }
 
 interface Shop {
@@ -14,6 +17,13 @@ interface Shop {
   shopifyDomain: string;
   createdAt: string;
 }
+
+const PLANS = [
+  { tier: "FREE", label: "Free", price: "$0/mo", features: ["5 trends/day", "1 competitor", "Basic AI"] },
+  { tier: "STARTER", label: "Starter", price: "$29/mo", features: ["50 trends/day", "5 competitors", "Standard AI", "Basic analytics"] },
+  { tier: "PRO", label: "Pro", price: "$79/mo", features: ["Unlimited trends", "25 competitors", "Advanced AI", "Full analytics", "Priority support"] },
+  { tier: "BLACK", label: "Black-Access", price: "$199/mo", features: ["Everything in Pro", "Unlimited competitors", "Premium AI", "White-label reports", "API access", "Priority support"] },
+];
 
 export default function SettingsPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -132,6 +142,78 @@ export default function SettingsPage() {
               <p className="text-sm text-slate-400 mb-1">Name</p>
               <p className="text-lg text-white">{user?.name || "-"}</p>
             </div>
+          </div>
+        </div>
+
+        {/* Plan & Billing Section */}
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-white mb-6">Plan & Billing</h2>
+          {user?.tier && (
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <span className={`inline-flex items-center gap-1 px-3 py-1 text-sm font-bold uppercase tracking-wider rounded-md ${
+                  user.tier === "BLACK"
+                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30"
+                    : user.tier === "PRO"
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+                    : user.tier === "STARTER"
+                    ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white"
+                    : "bg-slate-700 text-slate-300"
+                }`}>
+                  {user.tier === "BLACK" && (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                  )}
+                  {user.tier === "BLACK" ? "Black-Access" : user.tier + " Tier"}
+                </span>
+                {user.subscriptionStatus && (
+                  <span className="text-sm text-slate-400 capitalize">{user.subscriptionStatus}</span>
+                )}
+              </div>
+              <p className="text-sm text-slate-400">
+                {user.subscriptionPlan
+                  ? `Current plan: ${user.subscriptionPlan}`
+                  : "You are on the free tier. Upgrade to unlock premium features."}
+              </p>
+            </div>
+          )}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {PLANS.map((plan) => (
+              <div
+                key={plan.tier}
+                className={`p-4 rounded-lg border ${
+                  user?.tier === plan.tier
+                    ? "bg-indigo-900/20 border-indigo-500"
+                    : "bg-slate-700/50 border-slate-600"
+                }`}
+              >
+                <p className="text-sm font-bold text-white mb-1">{plan.label}</p>
+                <p className="text-lg font-bold text-indigo-400 mb-3">{plan.price}</p>
+                <ul className="space-y-1">
+                  {plan.features.map((f) => (
+                    <li key={f} className="text-xs text-slate-400">• {f}</li>
+                  ))}
+                </ul>
+                {user?.tier !== plan.tier && (
+                  <button
+                    onClick={() => {
+                      const target = `/api/shopify/billing?plan=${plan.tier}`;
+                      fetch(target)
+                        .then((r) => r.json())
+                        .then((data) => {
+                          if (data.url) window.location.href = data.url;
+                          else if (data.message) alert(data.message);
+                        })
+                        .catch(() => alert("Failed to process upgrade."));
+                    }}
+                    className="mt-3 block w-full text-center px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded transition"
+                  >
+                    Upgrade
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 

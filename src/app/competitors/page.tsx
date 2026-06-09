@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
+import { usePremiumAccess, PremiumBadge } from "@/components/ui/PremiumLock";
 
 interface Competitor {
   id: string;
@@ -18,6 +19,7 @@ interface Competitor {
 export default function CompetitorsPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { canAccess: hasBlackAccess, loading: tierLoading } = usePremiumAccess("BLACK");
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -170,14 +172,22 @@ export default function CompetitorsPage() {
                     <p className="text-sm text-slate-400">{competitor.shopDomain}</p>
                   </div>
                   <div className="text-right">
-                    <span className={`text-2xl font-bold ${getWeaknessColor(competitor.weaknessScore)}`}>
-                      {competitor.weaknessScore.toFixed(0)}
-                    </span>
-                    <p className="text-xs text-slate-400">Weakness</p>
+                    {hasBlackAccess ? (
+                      <span className={`text-2xl font-bold ${getWeaknessColor(competitor.weaknessScore)}`}>
+                        {competitor.weaknessScore.toFixed(0)}
+                      </span>
+                    ) : (
+                      <span className="text-2xl font-bold text-slate-500">??</span>
+                    )}
+                    <p className="text-xs text-slate-400">
+                      {hasBlackAccess ? "Weakness" : <PremiumBadge />}
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
+                  {hasBlackAccess ? (
+                    <>
                   <div className="flex justify-between">
                     <span className="text-slate-300 text-sm">Products</span>
                     <span className="text-white font-semibold">{competitor.productCount}</span>
@@ -194,13 +204,30 @@ export default function CompetitorsPage() {
                     <span className="text-slate-300 text-sm">Total Sales</span>
                     <span className="text-white font-semibold">{competitor.totalSales.toLocaleString()}</span>
                   </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-slate-300 text-sm">Products</span>
+                        <span className="text-white font-semibold">{competitor.productCount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-300 text-sm">Avg Price</span>
+                        <span className="text-white font-semibold">${competitor.avgPrice.toFixed(2)}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <button
                   onClick={() => router.push(`/competitors/${competitor.id}`)}
-                  className="w-full mt-4 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium transition"
+                  className={`w-full mt-4 px-4 py-2 rounded font-medium transition ${
+                    hasBlackAccess
+                      ? "bg-slate-700 hover:bg-slate-600 text-white"
+                      : "bg-indigo-600/50 hover:bg-indigo-600 text-white border border-indigo-500/50"
+                  }`}
                 >
-                  View Details
+                  {hasBlackAccess ? "View Details" : <><PremiumBadge /> Premium Access</>}
                 </button>
               </div>
             ))}
