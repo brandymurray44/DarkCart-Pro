@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { GenerateForm } from "@/components/product-creation/GenerateForm";
 import { LivePreviewCard } from "@/components/product-creation/LivePreviewCard";
 import { useGenerateProduct } from "@/hooks/useGenerateProduct";
@@ -8,6 +9,24 @@ import { useGenerateProduct } from "@/hooks/useGenerateProduct";
 export default function GenerateScreen() {
   const router = useRouter();
   const { generate, loading, error } = useGenerateProduct();
+  const [prefill, setPrefill] = useState<{
+    niche?: string;
+    productType?: string;
+    source?: string;
+    trendTitle?: string;
+    score?: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const trendData = sessionStorage.getItem("trendForGenerator");
+    if (trendData) {
+      try {
+        setPrefill(JSON.parse(trendData));
+      } catch {
+        // Ignore parse errors
+      }
+    }
+  }, []);
 
   const handleSubmit = async (data: { niche: string; productType: string; style: string; targetAudience: string }) => {
     const result = await generate({
@@ -35,7 +54,7 @@ export default function GenerateScreen() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="max-w-md">
-            <GenerateForm onSubmit={handleSubmit} loading={loading} error={error} />
+            <GenerateForm onSubmit={handleSubmit} loading={loading} error={error} prefill={prefill || undefined} />
           </div>
 
           <div className="flex items-center justify-center">

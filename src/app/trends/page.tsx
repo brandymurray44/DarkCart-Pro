@@ -14,6 +14,9 @@ interface Trend {
   niche: string;
   freshness?: string;
   momentum?: number;
+  velocity?: number;
+  saturation?: number;
+  description?: string;
 }
 
 export default function TrendsPage() {
@@ -95,9 +98,16 @@ export default function TrendsPage() {
     setSelectedTrend(trend);
   };
 
-  const handleGenerateProduct = (_trend: Trend) => {
+  const handleGenerateProduct = (trend: Trend) => {
     setSelectedTrend(null);
-    router.push(`/create`);
+    // Store trend data for the generator to use
+    sessionStorage.setItem("trendForGenerator", JSON.stringify({
+      title: trend.title,
+      niche: trend.niche,
+      source: trend.source,
+      score: trend.score,
+    }));
+    router.push(`/product-creation/generate`);
   };
 
   const getFreshnessColor = (freshness?: string) => {
@@ -128,12 +138,34 @@ export default function TrendsPage() {
         </div>
 
         <div className="mb-6 flex flex-wrap items-center gap-4">
-          <input
-            value={niche}
-            onChange={(e) => handleNicheChange(e.target.value)}
-            placeholder="Niche (e.g., home office)"
-            className="px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white"
-          />
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400 text-sm">Niche:</span>
+            <input
+              value={niche}
+              onChange={(e) => handleNicheChange(e.target.value)}
+              placeholder="home office"
+              className="px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white w-48"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400 text-sm">Source:</span>
+            <select
+              value={source}
+              onChange={(e) => handleSourceChange(e.target.value)}
+              className="px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white w-36"
+            >
+              <option value="">All Sources</option>
+              <option value="tiktok">TikTok</option>
+              <option value="etsy">Etsy</option>
+              <option value="reddit">Reddit</option>
+            </select>
+          </div>
+          <button
+            onClick={handleFilter}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-medium"
+          >
+            Filter
+          </button>
           <input
             value={source}
             onChange={(e) => handleSourceChange(e.target.value)}
@@ -165,28 +197,111 @@ export default function TrendsPage() {
 
         {loading ? (
           <div className="text-center text-slate-400">Loading trends...</div>
+        ) : trends.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-800 mb-4">
+              <svg className="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">No Trends Found</h3>
+            <p className="text-slate-400 mb-4">Run a scrape to discover trending products</p>
+            <button
+              onClick={handleScrape}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-medium"
+            >
+              Scrape Now
+            </button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {trends.map((trend, idx) => (
-              <button
+              <div
                 key={idx}
-                onClick={() => handleSelectTrend(trend)}
-                className="text-left p-4 bg-slate-800/50 border border-slate-700 rounded-lg hover:border-indigo-500 hover:bg-slate-800 transition"
+                className="group relative bg-slate-800/50 border border-slate-700 rounded-lg p-5 hover:border-indigo-500/60 hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-300"
               >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs uppercase tracking-wider text-indigo-400">{trend.source}</span>
-                  <span className={`text-sm font-semibold ${getScoreColor(trend.score)}`}>{trend.score.toFixed(1)}</span>
-                </div>
-                <h3 className="font-semibold text-white mb-2 line-clamp-2">{trend.title}</h3>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-slate-400">{trend.niche}</p>
-                  {trend.freshness && (
-                    <span className={`text-xs px-2 py-1 rounded border ${getFreshnessColor(trend.freshness)}`}>
-                      {trend.freshness}
+                {/* Velocity indicator */}
+                {trend.velocity !== undefined && (
+                  <div className="absolute top-3 right-3 flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-xs text-emerald-400 font-medium">
+                      {trend.velocity > 0 ? "+" : ""}{trend.velocity.toFixed(0)}%
                     </span>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => handleSelectTrend(trend)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs uppercase tracking-wider text-indigo-400 font-semibold">{trend.source}</span>
+                    {trend.freshness && (
+                      <span className={`text-xs px-2 py-0.5 rounded border ${getFreshnessColor(trend.freshness)}`}>
+                        {trend.freshness}
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="font-bold text-white mb-2 line-clamp-2 group-hover:text-indigo-300 transition-colors">
+                    {trend.title}
+                  </h3>
+
+                  {/* Score bar */}
+                  <div className="mb-3">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-slate-400">Trend Score</span>
+                      <span className={`font-semibold ${getScoreColor(trend.score)}`}>{trend.score.toFixed(1)}</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${trend.score >= 80 ? "bg-gradient-to-r from-green-500 to-emerald-400" : trend.score >= 60 ? "bg-gradient-to-r from-yellow-500 to-orange-400" : "bg-slate-500"}`}
+                        style={{ width: `${trend.score}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Saturation heatmap indicator */}
+                  {trend.saturation !== undefined && (
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs text-slate-400">Market Saturation</span>
+                      <div className="flex-1 h-1 bg-slate-700 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${trend.saturation < 40 ? "bg-green-500" : trend.saturation < 70 ? "bg-yellow-500" : "bg-red-500"}`}
+                          style={{ width: `${trend.saturation}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-slate-400">{trend.saturation.toFixed(0)}%</span>
+                    </div>
                   )}
+
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-slate-400">{trend.niche}</p>
+                    <div className="flex items-center gap-1 text-xs text-slate-500">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>View Details</span>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Hover action: Add to Generator */}
+                <div className="mt-4 pt-4 border-t border-slate-700/50 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <button
+                    onClick={() => handleSelectTrend(trend)}
+                    className="text-xs text-slate-400 hover:text-white transition"
+                  >
+                    View Details
+                  </button>
+                  <button
+                    onClick={() => handleGenerateProduct(trend)}
+                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded font-medium transition"
+                  >
+                    Generate Product
+                  </button>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}

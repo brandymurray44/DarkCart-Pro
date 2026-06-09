@@ -13,6 +13,12 @@ interface GenerateFormProps {
   onSubmit: (data: GenerateFormData) => void;
   loading: boolean;
   error: string | null;
+  prefill?: {
+    niche?: string;
+    productType?: string;
+    source?: string;
+    trendTitle?: string;
+  };
 }
 
 const STYLE_OPTIONS = [
@@ -26,12 +32,23 @@ const STYLE_OPTIONS = [
   { value: "eco-friendly", label: "Eco-Friendly" },
 ];
 
-export function GenerateForm({ onSubmit, loading, error }: GenerateFormProps) {
-  const [formData, setFormData] = React.useState<GenerateFormData>({
-    niche: "",
-    productType: "",
-    style: "",
-    targetAudience: "",
+export function GenerateForm({ onSubmit, loading, error, prefill }: GenerateFormProps) {
+  const [formData, setFormData] = React.useState<GenerateFormData>(() => {
+    // Pre-fill from trend data if available
+    if (prefill) {
+      return {
+        niche: prefill.niche || "",
+        productType: prefill.trendTitle || prefill.productType || "",
+        style: "",
+        targetAudience: "",
+      };
+    }
+    return {
+      niche: "",
+      productType: "",
+      style: "",
+      targetAudience: "",
+    };
   });
 
   const handleSubmit = (e: React.FormEvent) => {
