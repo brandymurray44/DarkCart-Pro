@@ -258,7 +258,7 @@ export default function PrivacyPage() {
             <ul className="mt-2 space-y-1 list-disc list-inside">
               <li>Email: <a href="mailto:privacy@darkcart.pro" className="text-indigo-400 hover:text-indigo-300">privacy@darkcart.pro</a></li>
               <li>Data Protection Officer: <a href="mailto:dpo@darkcart.pro" className="text-indigo-400 hover:text-indigo-300">dpo@darkcart.pro</a></li>
-              <li>Address: DarkCart-Pro Privacy, 123 Commerce Ave, Suite 100, Dover, DE 19901, USA</li>
+              <li>Address: DarkCart-Pro Privacy, 4524 SW Canyon Rd, Suite 201, Portland, OR 97221, USA</li>
             </ul>
             <p className="mt-3">EU/EEA Representative (under GDPR Article 27): DarkCart-Pro EU, Tower 42, 25 Old Broad St, London EC2N 1HQ, UK.</p>
           </section>

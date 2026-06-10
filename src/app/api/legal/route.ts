@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     company: {
       name: "DarkCart-Pro",
       email: "legal@darkcart.pro",
-      address: "123 Commerce Ave, Suite 100, Dover, DE 19901, USA",
+      address: "4524 SW Canyon Rd, Suite 201, Portland, OR 97221, USA",
     },
   });
 }
