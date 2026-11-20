@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  email         String   @unique
+  name          String?
+  shop          Shop?
+  onboarding    Onboarding?
+  sessions      Session[]
+}
+
+model Session {
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+}
+
+model Shop {
+  id               String   @id @default(uuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  shopifyDomain    String   @unique
+  accessToken      String
+  refreshToken     String?
+  scopes           String
+  blackAccessActive Boolean  @default(false)
+  user             User     @relation(fields: [userId], references: [id])
+  userId           String   @unique
+  products         Product[]
+  trendSnapshots   TrendSnapshot[]
+}
+
+model Onboarding {
+  id            String   @id @default(uuid())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String   @unique
+  niche         String
+  storeType     String
+  goals         String
+  completed     Boolean  @default(false)
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  shop          Shop     @relation(fields: [shopId], references: [id])
+  shopId        String
+  title         String
+  description   String
+  tags          String[]
+  seoTitle      String?
+  seoDescription String?
+  aiPrompt      String?
+  shopifyProductId String?
+  published     Boolean @default(false)
+}
+
+model TrendSnapshot {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  source      String
+  title       String
+  url         String
+  imageUrl    String?
+  score       Float
+  niche       String
+  metadata    Json
+  shop        Shop?    @relation(fields: [shopId], references: [id])
+  shopId      String?
+}
+
+model CompetitorSpy {
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  shopUrl      String
+  productUrl   String
+  price        Float?
+  rating       Float?
+  reviewCount  Int?
+  summary      String?
+  rawData      Json?
+}
+
+model RateLimitEntry {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  count     Int      @default(1)
+  resetAt   DateTime
+}
